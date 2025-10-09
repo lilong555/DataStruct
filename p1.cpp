@@ -121,7 +121,10 @@ ExamRegistrationSystem::~ExamRegistrationSystem()
 // ==================== 辅助函数 ====================
 int ExamRegistrationSystem::Hash(int exam_id)
 {
-    return exam_id % HASH_TABLE_SIZE;
+    // A is a prime number close to the golden ratio conjugate
+    const unsigned int A = 2654435769;
+    unsigned int hash = A * exam_id;
+    return (hash >> 16) % HASH_TABLE_SIZE;
 }
 
 void ExamRegistrationSystem::Clear()
