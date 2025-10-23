@@ -1,5 +1,6 @@
 # Build output
 p3/output/
+p5/output/
 
 # Claude Code system files
 .claude/
