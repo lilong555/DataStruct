@@ -123,7 +123,7 @@ int ExamRegistrationSystem::Hash(int exam_id)
 {
     // A is a prime number close to the golden ratio conjugate
     const unsigned int A = 2654435769;
-    unsigned int hash = A * exam_id;
+    unsigned long long hash = A * exam_id;
     return (hash >> 16) % HASH_TABLE_SIZE;
 }
 

@@ -1,0 +1,8 @@
+# Build output
+p3/output/
+
+# Claude Code system files
+.claude/
+
+# Documentation
+数据结构课程设计题目与考核指标2025.pdf
