@@ -4,6 +4,6 @@ p5/output/
 
 # Claude Code system files
 .claude/
-
+*.exe
 # Documentation
 数据结构课程设计题目与考核指标2025.pdf

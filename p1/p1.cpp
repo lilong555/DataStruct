@@ -122,7 +122,7 @@ ExamRegistrationSystem::~ExamRegistrationSystem()
 int ExamRegistrationSystem::Hash(int exam_id)
 {
     // A is a prime number close to the golden ratio conjugate
-    const unsigned int A = 2654435769;
+    const unsigned long long A = 2654435769;
     unsigned long long hash = A * exam_id;
     return (hash >> 16) % HASH_TABLE_SIZE;
 }
@@ -180,7 +180,7 @@ void ExamRegistrationSystem::ShowMenu()
     std::cout << "  [3] 查找考生信息" << std::endl;
     std::cout << "  [4] 修改考生信息" << std::endl;
     std::cout << "  [5] 统计考生信息" << std::endl;
-    std::cout << "  [0] 退出系统" << std::endl;
+    std::cout << "  [0] 退出系统   " << std::endl;
     PrintSeparator('-');
 }
 
