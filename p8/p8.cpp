@@ -19,7 +19,7 @@ class PowerGridSystem
 {
 public:
     PowerGridSystem();
-
+    ~PowerGridSystem() = default;
     // Main loop of the program
     void Run();
 
@@ -96,7 +96,7 @@ void PowerGridSystem::Run()
             break;
         case 'E':
         case 'e':
-            std::cout << "退出程序。\n";
+            std::cout << "已退出程序。";
             return;
         default:
             std::cout << "无效的选择，请重试。\n";
@@ -105,7 +105,6 @@ void PowerGridSystem::Run()
         // Only pause if not exiting
         if (choice != 'E' && choice != 'e')
         {
-            PressKeyToContinue();
         }
 
     } while (choice != 'E' && choice != 'e');
@@ -143,7 +142,15 @@ void PowerGridSystem::CreateVertices()
     std::cout << "请依次输入各顶点的名称:\n";
     for (int i = 0; i < num_vertices_; ++i)
     {
-        std::cin >> vertex_names_[i];
+        char vertexx[kMaxNameLen];
+        std::cin >> vertexx;
+        if (GetVertexIndex(vertexx) != -1)
+        {
+            std::cout << "顶点名称重复，请重新输入。\n";
+            --i; // Decrement to re-enter this vertex
+            continue;
+        }
+        std::strcpy(vertex_names_[i], vertexx);
     }
 
     // Reset graph connections when vertices are recreated
@@ -174,13 +181,18 @@ void PowerGridSystem::AddEdges()
     {
         std::cout << "请输入两个顶点及边: ";
         std::cin >> u_name >> v_name >> weight;
-
+        if (std::cin.fail())
+        {
+            std::cout << "无效的长度，请重新输入。\n";
+            std::cin.clear(); // Clear error flags
+            ClearInputBuffer();
+            continue;
+        }
         // Check for exit condition ? ? 0
-        if (strcmp(u_name, "?") == 0 && strcmp(v_name, "?") == 0 && weight == 0)
+        if (strcmp(u_name, "?") == 0 || strcmp(v_name, "?") == 0 || (weight == 0))
         {
             break;
         }
-
         int u_idx = GetVertexIndex(u_name);
         int v_idx = GetVertexIndex(v_name);
 
@@ -302,7 +314,7 @@ void PowerGridSystem::DisplayMST() const
         // Format: a-<b>->c (vertex-weight->vertex)
         // Note: The screenshot shows specific formatting.
         // Example: a-(8)->b
-        std::cout << vertex_names_[u] << "-<" << w << ">->" << vertex_names_[v]
+        std::cout << vertex_names_[u] << "<-<" << w << ">->" << vertex_names_[v]
                   << "   ";
 
         // Add a newline every few edges for readability if needed,
@@ -335,13 +347,6 @@ void PowerGridSystem::ClearInputBuffer() const
     {
         std::cin.get();
     }
-}
-
-void PowerGridSystem::PressKeyToContinue() const
-{
-    std::cout << "Press any key to continue";
-    // Consume any leftover chars
-    std::cin.get();
 }
 
 int main()
