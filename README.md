@@ -53,3 +53,8 @@ g++ -std=c++17 -O2 -Wall -Wextra -pedantic p10/10_sorting_comparison.cpp -o outp
 
 GitHub 仓库：`https://github.com/lilong555/DataStruct`
 
+## 文档站点
+
+- 文档源文件：`doc/`
+- Docusaurus 站点工程：`website/`
+- GitHub Pages：`https://lilong555.github.io/DataStruct/`
