@@ -1,81 +1,108 @@
-/**
- * @file 10_sorting_comparison.cpp
- * @brief 8种排序算法的比较案例
- * @author 数据结构课程设计
- * @date 2025
- *
- * 本程序实现了8种经典排序算法，并对其性能进行比较分析
- * 包括时间复杂度、空间复杂度、比较次数和交换次数的统计
- */
-
 #include <iostream>
-#include <vector>
-#include <algorithm>
-#include <ctime>
-#include <cstdlib>
-#include <iomanip>
-#include <chrono>
-#include <string>
+#include <cmath>
+#include <cstring>
 
-using namespace std;
-using namespace std::chrono;
+// 题目十：8 种排序算法的比较案例
+// 功能：生成随机数组，对不同排序算法进行排序，并统计耗时、比较次数与交换次数。
 
-// 排序统计结构体
+typedef long clock_t;
+extern "C" clock_t clock(void);
+static const clock_t kClocksPerSec = 1000000; // Linux/WSL2 常见取值
+
 struct SortStatistics
 {
-    string algorithm_name;   // 算法名称
-    long long compare_count; // 比较次数
-    long long swap_count;    // 交换次数
-    double time_elapsed;     // 运行时间（毫秒）
+    char algorithm_name[32];
+    long long compare_count;
+    long long swap_count;
+    double time_elapsed_ms;
 
-    SortStatistics(string name) : algorithm_name(name),
-                                  compare_count(0),
-                                  swap_count(0),
-                                  time_elapsed(0.0) {}
+    SortStatistics()
+    {
+        algorithm_name[0] = '\0';
+        compare_count = 0;
+        swap_count = 0;
+        time_elapsed_ms = 0.0;
+    }
 };
+
+static void CopyString(char *dst, const char *src, int dst_size)
+{
+    if (dst_size <= 0)
+    {
+        return;
+    }
+    std::strncpy(dst, src, dst_size - 1);
+    dst[dst_size - 1] = '\0';
+}
+
+static void ClearInputBuffer()
+{
+    std::cin.clear();
+    std::cin.ignore(10000, '\n');
+}
+
+static void SwapInt(int &a, int &b)
+{
+    int tmp = a;
+    a = b;
+    b = tmp;
+}
+
+static unsigned int NextRand(unsigned int &seed)
+{
+    seed = seed * 1103515245u + 12345u;
+    return (seed / 65536u) % 32768u;
+}
+
+static int *GenerateRandomArray(int n)
+{
+    if (n <= 0)
+    {
+        return nullptr;
+    }
+
+    int *arr = new int[n];
+    unsigned int seed = 123456789u;
+    for (int i = 0; i < n; ++i)
+    {
+        unsigned int r1 = NextRand(seed);
+        unsigned int r2 = NextRand(seed);
+        unsigned int val = (r1 << 15) ^ r2;
+        arr[i] = (int)(val % 1000000u);
+    }
+    return arr;
+}
 
 // ==================== 排序算法实现 ====================
 
-/**
- * @brief 冒泡排序
- * @param arr 待排序数组
- * @param stats 统计信息
- * 时间复杂度：O(n²)，空间复杂度：O(1)
- */
-void BubbleSort(vector<int> &arr, SortStatistics &stats)
+static void BubbleSort(int *arr, int n, SortStatistics &stats)
 {
-    int n = arr.size();
-    for (int i = 0; i < n - 1; i++)
+    for (int i = 0; i < n - 1; ++i)
     {
         bool swapped = false;
-        for (int j = 0; j < n - i - 1; j++)
+        for (int j = 0; j < n - i - 1; ++j)
         {
             stats.compare_count++;
             if (arr[j] > arr[j + 1])
             {
-                swap(arr[j], arr[j + 1]);
+                SwapInt(arr[j], arr[j + 1]);
                 stats.swap_count++;
                 swapped = true;
             }
         }
         if (!swapped)
-            break; // 优化：如果没有交换，说明已经有序
+        {
+            break;
+        }
     }
 }
 
-/**
- * @brief 选择排序
- * @param arr 待排序数组
- * @param stats 统计信息
- * 时间复杂度：O(n²)，空间复杂度：O(1)
- */
-void SelectionSort(vector<int> &arr, SortStatistics &stats)
+static void SelectionSort(int *arr, int n, SortStatistics &stats)
 {
-    int n = arr.size();
-    for (int i = 0; i < n - 1; i++)
+    for (int i = 0; i < n - 1; ++i)
     {
         int min_idx = i;
-        for (int j = i + 1; j < n; j++)
+        for (int j = i + 1; j < n; ++j)
         {
             stats.compare_count++;
             if (arr[j] < arr[min_idx])
@@ -85,22 +112,15 @@ void SelectionSort(vector<int> &arr, SortStatistics &stats)
         }
         if (min_idx != i)
         {
-            swap(arr[i], arr[min_idx]);
+            SwapInt(arr[i], arr[min_idx]);
             stats.swap_count++;
         }
     }
 }
 
-/**
- * @brief 直接插入排序
- * @param arr 待排序数组
- * @param stats 统计信息
- * 时间复杂度：O(n²)，空间复杂度：O(1)
- */
-void InsertionSort(vector<int> &arr, SortStatistics &stats)
+static void InsertionSort(int *arr, int n, SortStatistics &stats)
 {
-    int n = arr.size();
-    for (int i = 1; i < n; i++)
+    for (int i = 1; i < n; ++i)
     {
         int key = arr[i];
         int j = i - 1;
@@ -111,7 +131,7 @@ void InsertionSort(vector<int> &arr, SortStatistics &stats)
             {
                 arr[j + 1] = arr[j];
                 stats.swap_count++;
-                j--;
+                --j;
             }
             else
             {
@@ -122,28 +142,22 @@ void InsertionSort(vector<int> &arr, SortStatistics &stats)
     }
 }
 
-/**
- * @brief 希尔排序
- * @param arr 待排序数组
- * @param stats 统计信息
- * 时间复杂度：O(n^1.3)到O(n²)，空间复杂度：O(1)
- */
-void ShellSort(vector<int> &arr, SortStatistics &stats)
+static void ShellSort(int *arr, int n, SortStatistics &stats)
 {
-    int n = arr.size();
     for (int gap = n / 2; gap > 0; gap /= 2)
     {
-        for (int i = gap; i < n; i++)
+        for (int i = gap; i < n; ++i)
         {
             int temp = arr[i];
-            int j;
-            for (j = i; j >= gap; j -= gap)
+            int j = i;
+            while (j >= gap)
             {
                 stats.compare_count++;
                 if (arr[j - gap] > temp)
                 {
                     arr[j] = arr[j - gap];
                     stats.swap_count++;
+                    j -= gap;
                 }
                 else
                 {
@@ -155,323 +169,260 @@ void ShellSort(vector<int> &arr, SortStatistics &stats)
     }
 }
 
-/**
- * @brief 快速排序的分区函数
- */
-int Partition(vector<int> &arr, int low, int high, SortStatistics &stats)
+static int Partition(int *arr, int low, int high, SortStatistics &stats)
 {
     int pivot = arr[high];
     int i = low - 1;
-
-    for (int j = low; j < high; j++)
+    for (int j = low; j < high; ++j)
     {
         stats.compare_count++;
         if (arr[j] < pivot)
         {
-            i++;
-            swap(arr[i], arr[j]);
-            stats.swap_count++;
+            ++i;
+            if (i != j)
+            {
+                SwapInt(arr[i], arr[j]);
+                stats.swap_count++;
+            }
         }
     }
-    swap(arr[i + 1], arr[high]);
-    stats.swap_count++;
+    if (i + 1 != high)
+    {
+        SwapInt(arr[i + 1], arr[high]);
+        stats.swap_count++;
+    }
     return i + 1;
 }
 
-/**
- * @brief 快速排序递归函数
- */
-void QuickSortRecursive(vector<int> &arr, int low, int high, SortStatistics &stats)
+static void QuickSortRecursive(int *arr, int low, int high, SortStatistics &stats)
 {
     if (low < high)
     {
-        int pi = Partition(arr, low, high, stats);
-        QuickSortRecursive(arr, low, pi - 1, stats);
-        QuickSortRecursive(arr, pi + 1, high, stats);
+        int p = Partition(arr, low, high, stats);
+        QuickSortRecursive(arr, low, p - 1, stats);
+        QuickSortRecursive(arr, p + 1, high, stats);
     }
 }
 
-/**
- * @brief 快速排序
- * @param arr 待排序数组
- * @param stats 统计信息
- * 时间复杂度：O(nlogn)平均，O(n²)最坏，空间复杂度：O(logn)
- */
-void QuickSort(vector<int> &arr, SortStatistics &stats)
+static void QuickSort(int *arr, int n, SortStatistics &stats)
 {
-    if (arr.size() > 1)
+    if (n > 1)
     {
-        QuickSortRecursive(arr, 0, arr.size() - 1, stats);
+        QuickSortRecursive(arr, 0, n - 1, stats);
     }
 }
 
-/**
- * @brief 堆调整函数
- */
-void Heapify(vector<int> &arr, int n, int i, SortStatistics &stats)
+static void Heapify(int *arr, int n, int i, SortStatistics &stats)
 {
-    int largest = i;
-    int left = 2 * i + 1;
-    int right = 2 * i + 2;
-
-    if (left < n)
+    while (true)
     {
-        stats.compare_count++;
-        if (arr[left] > arr[largest])
+        int largest = i;
+        int left = 2 * i + 1;
+        int right = 2 * i + 2;
+
+        if (left < n)
         {
-            largest = left;
+            stats.compare_count++;
+            if (arr[left] > arr[largest])
+            {
+                largest = left;
+            }
         }
-    }
-
-    if (right < n)
-    {
-        stats.compare_count++;
-        if (arr[right] > arr[largest])
+        if (right < n)
         {
-            largest = right;
+            stats.compare_count++;
+            if (arr[right] > arr[largest])
+            {
+                largest = right;
+            }
         }
-    }
 
-    if (largest != i)
-    {
-        swap(arr[i], arr[largest]);
+        if (largest == i)
+        {
+            return;
+        }
+
+        SwapInt(arr[i], arr[largest]);
         stats.swap_count++;
-        Heapify(arr, n, largest, stats);
+        i = largest;
     }
 }
 
-/**
- * @brief 堆排序
- * @param arr 待排序数组
- * @param stats 统计信息
- * 时间复杂度：O(nlogn)，空间复杂度：O(1)
- */
-void HeapSort(vector<int> &arr, SortStatistics &stats)
+static void HeapSort(int *arr, int n, SortStatistics &stats)
 {
-    int n = arr.size();
-
-    // 建堆
-    for (int i = n / 2 - 1; i >= 0; i--)
+    for (int i = n / 2 - 1; i >= 0; --i)
     {
         Heapify(arr, n, i, stats);
     }
-
-    // 排序
-    for (int i = n - 1; i > 0; i--)
+    for (int i = n - 1; i > 0; --i)
     {
-        swap(arr[0], arr[i]);
+        SwapInt(arr[0], arr[i]);
         stats.swap_count++;
         Heapify(arr, i, 0, stats);
     }
 }
 
-/**
- * @brief 归并函数
- */
-void Merge(vector<int> &arr, int left, int mid, int right, SortStatistics &stats)
+static void Merge(int *arr, int *tmp, int left, int mid, int right, SortStatistics &stats)
 {
-    int n1 = mid - left + 1;
-    int n2 = right - mid;
+    int i = left;
+    int j = mid + 1;
+    int k = left;
 
-    vector<int> L(n1), R(n2);
-
-    for (int i = 0; i < n1; i++)
-    {
-        L[i] = arr[left + i];
-    }
-    for (int j = 0; j < n2; j++)
-    {
-        R[j] = arr[mid + 1 + j];
-    }
-
-    int i = 0, j = 0, k = left;
-
-    while (i < n1 && j < n2)
+    while (i <= mid && j <= right)
     {
         stats.compare_count++;
-        if (L[i] <= R[j])
+        if (arr[i] <= arr[j])
         {
-            arr[k] = L[i];
-            i++;
+            tmp[k++] = arr[i++];
         }
         else
         {
-            arr[k] = R[j];
-            j++;
+            tmp[k++] = arr[j++];
         }
-        stats.swap_count++; // 归并过程中的移动计为交换
-        k++;
-    }
-
-    while (i < n1)
-    {
-        arr[k] = L[i];
         stats.swap_count++;
-        i++;
-        k++;
     }
-
-    while (j < n2)
+    while (i <= mid)
     {
-        arr[k] = R[j];
+        tmp[k++] = arr[i++];
         stats.swap_count++;
-        j++;
-        k++;
     }
-}
-
-/**
- * @brief 归并排序递归函数
- */
-void MergeSortRecursive(vector<int> &arr, int left, int right, SortStatistics &stats)
-{
-    if (left < right)
+    while (j <= right)
     {
-        int mid = left + (right - left) / 2;
-        MergeSortRecursive(arr, left, mid, stats);
-        MergeSortRecursive(arr, mid + 1, right, stats);
-        Merge(arr, left, mid, right, stats);
+        tmp[k++] = arr[j++];
+        stats.swap_count++;
     }
-}
-
-/**
- * @brief 归并排序
- * @param arr 待排序数组
- * @param stats 统计信息
- * 时间复杂度：O(nlogn)，空间复杂度：O(n)
- */
-void MergeSort(vector<int> &arr, SortStatistics &stats)
-{
-    if (arr.size() > 1)
+    for (int t = left; t <= right; ++t)
     {
-        MergeSortRecursive(arr, 0, arr.size() - 1, stats);
+        arr[t] = tmp[t];
     }
 }
 
-/**
- * @brief 基数排序
- * @param arr 待排序数组
- * @param stats 统计信息
- * 时间复杂度：O(d*n)，空间复杂度：O(n+k)
- */
-void RadixSort(vector<int> &arr, SortStatistics &stats)
+static void MergeSortRecursive(int *arr, int *tmp, int left, int right, SortStatistics &stats)
 {
-    if (arr.empty())
+    if (left >= right)
+    {
         return;
+    }
+    int mid = left + (right - left) / 2;
+    MergeSortRecursive(arr, tmp, left, mid, stats);
+    MergeSortRecursive(arr, tmp, mid + 1, right, stats);
+    Merge(arr, tmp, left, mid, right, stats);
+}
 
-    // 找到最大值
-    int max_val = *max_element(arr.begin(), arr.end());
+static void MergeSort(int *arr, int n, SortStatistics &stats)
+{
+    if (n <= 1)
+    {
+        return;
+    }
+    int *tmp = new int[n];
+    MergeSortRecursive(arr, tmp, 0, n - 1, stats);
+    delete[] tmp;
+}
 
-    // 对每一位进行计数排序
+static void RadixSort(int *arr, int n, SortStatistics &stats)
+{
+    if (n <= 1)
+    {
+        return;
+    }
+
+    int max_val = arr[0];
+    for (int i = 1; i < n; ++i)
+    {
+        if (arr[i] > max_val)
+        {
+            max_val = arr[i];
+        }
+    }
+
+    int *output = new int[n];
+    int count[10];
+
     for (int exp = 1; max_val / exp > 0; exp *= 10)
     {
-        vector<int> output(arr.size());
-        vector<int> count(10, 0);
-
-        // 统计每个数字出现的次数
-        for (size_t i = 0; i < arr.size(); i++)
+        for (int i = 0; i < 10; ++i)
         {
-            count[(arr[i] / exp) % 10]++;
-            stats.compare_count++;
+            count[i] = 0;
         }
-
-        // 计算位置
-        for (int i = 1; i < 10; i++)
+        for (int i = 0; i < n; ++i)
+        {
+            int digit = (arr[i] / exp) % 10;
+            count[digit]++;
+        }
+        for (int i = 1; i < 10; ++i)
         {
             count[i] += count[i - 1];
         }
-
-        // 构建输出数组
-        for (int i = arr.size() - 1; i >= 0; i--)
+        for (int i = n - 1; i >= 0; --i)
         {
-            output[count[(arr[i] / exp) % 10] - 1] = arr[i];
-            count[(arr[i] / exp) % 10]--;
+            int digit = (arr[i] / exp) % 10;
+            output[count[digit] - 1] = arr[i];
+            count[digit]--;
             stats.swap_count++;
         }
-
-        // 复制回原数组
-        for (size_t i = 0; i < arr.size(); i++)
+        for (int i = 0; i < n; ++i)
         {
             arr[i] = output[i];
         }
     }
+
+    delete[] output;
 }
 
-// ==================== 测试和工具函数 ====================
+// ==================== 驱动与展示 ====================
 
-/**
- * @brief 生成随机数数组
- */
-vector<int> GenerateRandomArray(int size)
+typedef void (*SortFunc)(int *, int, SortStatistics &);
+
+struct AlgorithmEntry
 {
-    vector<int> arr(size);
-    srand(time(nullptr));
-    for (int i = 0; i < size; i++)
+    const char *name;
+    SortFunc func;
+};
+
+static void ExecuteSort(const int *original, int n, const AlgorithmEntry &algo)
+{
+    int *data = new int[n];
+    for (int i = 0; i < n; ++i)
     {
-        arr[i] = rand() % 100000; // 生成0-99999之间的随机数
+        data[i] = original[i];
     }
-    return arr;
+
+    SortStatistics stats;
+    CopyString(stats.algorithm_name, algo.name, (int)sizeof(stats.algorithm_name));
+
+    clock_t start = clock();
+    algo.func(data, n, stats);
+    clock_t end = clock();
+
+    stats.time_elapsed_ms = (double)(end - start) * 1000.0 / (double)kClocksPerSec;
+
+    std::cout.setf(std::ios::fixed);
+    std::cout.precision(3);
+    std::cout << stats.algorithm_name << "\t"
+              << stats.time_elapsed_ms << " ms\t"
+              << stats.compare_count << "\t"
+              << stats.swap_count << "\n";
+
+    delete[] data;
 }
 
-/**
- * @brief 验证数组是否已排序
- */
-bool IsSorted(const vector<int> &arr)
+static void RunPerformanceTest(int n)
 {
-    for (size_t i = 1; i < arr.size(); i++)
+    if (n <= 0)
     {
-        if (arr[i] < arr[i - 1])
-        {
-            return false;
-        }
+        std::cout << "数据规模无效。\n";
+        return;
     }
-    return true;
-}
 
-/**
- * @brief 执行排序并统计
- */
-void ExecuteSort(vector<int> arr, void (*sortFunc)(vector<int> &, SortStatistics &),
-                 SortStatistics &stats)
-{
-    auto start = high_resolution_clock::now();
-    sortFunc(arr, stats);
-    auto end = high_resolution_clock::now();
-
-    stats.time_elapsed = duration_cast<microseconds>(end - start).count() / 1000.0;
-
-    if (!IsSorted(arr))
+    int *original = GenerateRandomArray(n);
+    if (!original)
     {
-        cout << "警告：" << stats.algorithm_name << " 排序结果不正确！" << endl;
+        std::cout << "生成数据失败。\n";
+        return;
     }
-}
 
-/**
- * @brief 打印统计结果
- */
-void PrintStatistics(const SortStatistics &stats)
-{
-    cout << left << setw(15) << stats.algorithm_name
-         << "  时间: " << setw(12) << fixed << setprecision(3) << stats.time_elapsed << " ms"
-         << "  比较: " << setw(12) << stats.compare_count
-         << "  交换: " << setw(12) << stats.swap_count << endl;
-}
-
-/**
- * @brief 运行所有排序算法的性能测试
- */
-void RunPerformanceTest(int data_size)
-{
-    cout << "\n"
-         << string(80, '=') << endl;
-    cout << "数据规模: " << data_size << " 个随机数" << endl;
-    cout << string(80, '=') << endl;
-
-    // 生成原始数据
-    vector<int> original_data = GenerateRandomArray(data_size);
-
-    // 定义排序算法
-    vector<pair<string, void (*)(vector<int> &, SortStatistics &)>> algorithms = {
+    AlgorithmEntry algorithms[] = {
         {"冒泡排序", BubbleSort},
         {"选择排序", SelectionSort},
         {"直接插入排序", InsertionSort},
@@ -481,173 +432,151 @@ void RunPerformanceTest(int data_size)
         {"归并排序", MergeSort},
         {"基数排序", RadixSort}};
 
-    cout << left << setw(15) << "排序算法"
-         << "  " << setw(20) << "执行时间"
-         << "  " << setw(15) << "比较次数"
-         << "  " << setw(15) << "交换次数" << endl;
-    cout << string(80, '-') << endl;
+    std::cout << "\n============================================================\n";
+    std::cout << "数据规模: " << n << "\n";
+    std::cout << "排序算法\t时间\t\t比较次数\t交换次数\n";
+    std::cout << "------------------------------------------------------------\n";
 
-    // 对每种算法执行测试
-    for (auto &algo : algorithms)
+    for (int i = 0; i < 8; ++i)
     {
-        SortStatistics stats(algo.first);
-        vector<int> test_data = original_data; // 复制数据
-        ExecuteSort(test_data, algo.second, stats);
-        PrintStatistics(stats);
+        ExecuteSort(original, n, algorithms[i]);
     }
 
-    cout << string(80, '=') << endl;
+    std::cout << "============================================================\n";
+
+    delete[] original;
 }
 
-/**
- * @brief 显示菜单
- */
-void ShowMenu()
+static void ShowMenu()
 {
-    cout << "\n"
-         << string(50, '*') << endl;
-    cout << "**" << setw(48) << "排序算法比较" << "**" << endl;
-    cout << string(50, '=') << endl;
-    cout << "**" << setw(25) << "1 ---- 冒泡排序" << setw(23) << "**" << endl;
-    cout << "**" << setw(25) << "2 ---- 选择排序" << setw(23) << "**" << endl;
-    cout << "**" << setw(28) << "3 ---- 直接插入排序" << setw(20) << "**" << endl;
-    cout << "**" << setw(25) << "4 ---- 希尔排序" << setw(23) << "**" << endl;
-    cout << "**" << setw(25) << "5 ---- 快速排序" << setw(23) << "**" << endl;
-    cout << "**" << setw(24) << "6 ---- 堆排序" << setw(24) << "**" << endl;
-    cout << "**" << setw(25) << "7 ---- 归并排序" << setw(23) << "**" << endl;
-    cout << "**" << setw(25) << "8 ---- 基数排序" << setw(23) << "**" << endl;
-    cout << "**" << setw(25) << "9 ---- 退出程序" << setw(23) << "**" << endl;
-    cout << string(50, '=') << endl;
+    std::cout << "\n**************************************************\n";
+    std::cout << "**              排序算法比较                    **\n";
+    std::cout << "==================================================\n";
+    std::cout << "** 1 ---- 冒泡排序                              **\n";
+    std::cout << "** 2 ---- 选择排序                              **\n";
+    std::cout << "** 3 ---- 直接插入排序                          **\n";
+    std::cout << "** 4 ---- 希尔排序                              **\n";
+    std::cout << "** 5 ---- 快速排序                              **\n";
+    std::cout << "** 6 ---- 堆排序                                **\n";
+    std::cout << "** 7 ---- 归并排序                              **\n";
+    std::cout << "** 8 ---- 基数排序                              **\n";
+    std::cout << "** 9 ---- 退出程序                              **\n";
+    std::cout << "==================================================\n";
 }
 
-/**
- * @brief 单个算法测试
- */
-void TestSingleAlgorithm(int choice, int data_size)
+static void TestSingleAlgorithm(int choice, int n)
 {
-    vector<int> test_data = GenerateRandomArray(data_size);
-    SortStatistics stats("");
-
-    switch (choice)
+    if (n <= 0)
     {
-    case 1:
-        stats.algorithm_name = "冒泡排序";
-        ExecuteSort(test_data, BubbleSort, stats);
-        break;
-    case 2:
-        stats.algorithm_name = "选择排序";
-        ExecuteSort(test_data, SelectionSort, stats);
-        break;
-    case 3:
-        stats.algorithm_name = "直接插入排序";
-        ExecuteSort(test_data, InsertionSort, stats);
-        break;
-    case 4:
-        stats.algorithm_name = "希尔排序";
-        ExecuteSort(test_data, ShellSort, stats);
-        break;
-    case 5:
-        stats.algorithm_name = "快速排序";
-        ExecuteSort(test_data, QuickSort, stats);
-        break;
-    case 6:
-        stats.algorithm_name = "堆排序";
-        ExecuteSort(test_data, HeapSort, stats);
-        break;
-    case 7:
-        stats.algorithm_name = "归并排序";
-        ExecuteSort(test_data, MergeSort, stats);
-        break;
-    case 8:
-        stats.algorithm_name = "基数排序";
-        ExecuteSort(test_data, RadixSort, stats);
-        break;
-    default:
-        cout << "无效的选择！" << endl;
+        std::cout << "数据规模无效。\n";
         return;
     }
 
-    cout << "\n算法: " << stats.algorithm_name << endl;
-    cout << "数据规模: " << data_size << endl;
-    cout << "执行时间: " << fixed << setprecision(3) << stats.time_elapsed << " ms" << endl;
-    cout << "比较次数: " << stats.compare_count << endl;
-    cout << "交换次数: " << stats.swap_count << endl;
+    int *data = GenerateRandomArray(n);
+    if (!data)
+    {
+        std::cout << "生成数据失败。\n";
+        return;
+    }
+
+    AlgorithmEntry algorithms[] = {
+        {"冒泡排序", BubbleSort},
+        {"选择排序", SelectionSort},
+        {"直接插入排序", InsertionSort},
+        {"希尔排序", ShellSort},
+        {"快速排序", QuickSort},
+        {"堆排序", HeapSort},
+        {"归并排序", MergeSort},
+        {"基数排序", RadixSort}};
+
+    if (choice < 1 || choice > 8)
+    {
+        std::cout << "无效的选择。\n";
+        delete[] data;
+        return;
+    }
+
+    SortStatistics stats;
+    CopyString(stats.algorithm_name, algorithms[choice - 1].name, (int)sizeof(stats.algorithm_name));
+
+    clock_t start = clock();
+    algorithms[choice - 1].func(data, n, stats);
+    clock_t end = clock();
+    stats.time_elapsed_ms = (double)(end - start) * 1000.0 / (double)kClocksPerSec;
+
+    std::cout.setf(std::ios::fixed);
+    std::cout.precision(3);
+    std::cout << "\n算法: " << stats.algorithm_name << "\n";
+    std::cout << "数据规模: " << n << "\n";
+    std::cout << "执行时间: " << stats.time_elapsed_ms << " ms\n";
+    std::cout << "比较次数: " << stats.compare_count << "\n";
+    std::cout << "交换次数: " << stats.swap_count << "\n";
+
+    delete[] data;
 }
 
-/**
- * @brief 主函数
- */
 int main()
 {
-    cout << "欢迎使用排序算法比较系统！" << endl;
+    std::cout << "欢迎使用排序算法比较系统！\n";
 
     while (true)
     {
         ShowMenu();
 
-        int choice;
-        cout << "\n请选择排序算法：";
-        cin >> choice;
+        int choice = 0;
+        std::cout << "\n请选择排序算法：";
+        if (!(std::cin >> choice))
+        {
+            std::cout << "输入错误，请重新输入！\n";
+            ClearInputBuffer();
+            continue;
+        }
 
         if (choice == 9)
         {
-            cout << "感谢使用，再见！" << endl;
+            std::cout << "感谢使用，再见！\n";
             break;
         }
-
         if (choice < 1 || choice > 9)
         {
-            cout << "无效的选择，请重新输入！" << endl;
+            std::cout << "无效的选择，请重新输入！\n";
             continue;
         }
 
-        int data_size;
-        cout << "请输入要产生的随机数个数：";
-        cin >> data_size;
-
-        if (data_size <= 0 || data_size > 1000000)
+        int n = 0;
+        std::cout << "请输入要产生的随机数个数：";
+        if (!(std::cin >> n))
         {
-            cout << "数据规模无效！请输入1-1000000之间的数字。" << endl;
+            std::cout << "输入错误，请重新输入！\n";
+            ClearInputBuffer();
+            continue;
+        }
+        if (n <= 0 || n > 1000000)
+        {
+            std::cout << "数据规模无效！请输入 1-1000000 之间的数字。\n";
             continue;
         }
 
-        // 单个算法测试
-        TestSingleAlgorithm(choice, data_size);
+        TestSingleAlgorithm(choice, n);
 
-        // 询问是否进行完整性能测试
-        char perform_full_test;
-        cout << "\n是否对所有算法进行性能比较测试？(y/n): ";
-        cin >> perform_full_test;
+        char perform_full_test = 'n';
+        std::cout << "\n是否对所有算法进行性能比较测试？(y/n): ";
+        std::cin >> perform_full_test;
 
         if (perform_full_test == 'y' || perform_full_test == 'Y')
         {
-            // 对不同数据规模进行测试
-            vector<int> test_sizes = {100, 1000, 10000, 100000};
+            RunPerformanceTest(100);
+            RunPerformanceTest(1000);
+            RunPerformanceTest(10000);
+            RunPerformanceTest(100000);
 
-            bool exists = false;
-            for (int size : test_sizes)
+            if (n != 100 && n != 1000 && n != 10000 && n != 100000)
             {
-                if (size == data_size)
-                {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists)
-            {
-                test_sizes.push_back(data_size);
-            }
-
-            for (int size : test_sizes)
-            {
-                if (size >= 50000)
-                {
-                    cout << "\n提示：数据规模较大，冒泡/选择/插入等 O(n^2) 算法可能耗时较长。" << endl;
-                }
-                RunPerformanceTest(size);
+                RunPerformanceTest(n);
             }
         }
     }
 
     return 0;
 }
+
