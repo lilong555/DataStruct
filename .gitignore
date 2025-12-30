@@ -1,9 +1,13 @@
 # Build output
 p3/output/
 p5/output/
+output/
+!output/*.exe
 
 # Claude Code system files
 .claude/
+.vscode/
+*:Zone.Identifier
 *.exe
 # Documentation
 数据结构课程设计题目与考核指标2025.pdf

@@ -2,12 +2,12 @@
 #include <cmath>
 #include <cstring>
 
-// Constants for array limits and infinity
+// 常量：数组上限与“无穷大”
 const int kMaxNodes = 100;
 const int kMaxNameLen = 50;
 const int kInfinity = 2147483647;
 
-// Structure to represent an edge in the MST
+// 最小生成树中的边
 struct Edge
 {
     int u_index;
@@ -20,18 +20,18 @@ class PowerGridSystem
 public:
     PowerGridSystem();
     ~PowerGridSystem() = default;
-    // Main loop of the program
+    // 主循环
     void Run();
 
 private:
-    // Helper methods corresponding to menu options
+    // 菜单对应功能
     void ShowMenu() const;
     void CreateVertices();
     void AddEdges();
     void ConstructPrimMST();
     void DisplayMST() const;
 
-    // Utility methods
+    // 工具函数
     int GetVertexIndex(const char *name) const;
     void ClearInputBuffer() const;
     void PressKeyToContinue() const;
@@ -47,19 +47,19 @@ private:
     bool is_mst_created_;
 };
 
-// Constructor: Initialize variables
+// 构造函数：初始化成员
 PowerGridSystem::PowerGridSystem()
 {
     num_vertices_ = 0;
     mst_edge_count_ = 0;
     is_mst_created_ = false;
 
-    // Initialize adjacency matrix with Infinity
+    // 初始化邻接矩阵
     for (int i = 0; i < kMaxNodes; ++i)
     {
         for (int j = 0; j < kMaxNodes; ++j)
         {
-            adj_matrix_[i][j] = kInfinity;
+            adj_matrix_[i][j] = (i == j ? 0 : kInfinity);
         }
     }
 }
@@ -73,7 +73,7 @@ void PowerGridSystem::Run()
         std::cout << "请选择操作: ";
         std::cin >> choice;
 
-        // Handle newline left in buffer
+        // 清理输入缓冲区的残留
         ClearInputBuffer();
 
         switch (choice)
@@ -102,9 +102,10 @@ void PowerGridSystem::Run()
             std::cout << "无效的选择，请重试。\n";
         }
 
-        // Only pause if not exiting
+        // 非退出时暂停，便于查看输出
         if (choice != 'E' && choice != 'e')
         {
+            PressKeyToContinue();
         }
 
     } while (choice != 'E' && choice != 'e');
@@ -153,16 +154,16 @@ void PowerGridSystem::CreateVertices()
         std::strcpy(vertex_names_[i], vertexx);
     }
 
-    // Reset graph connections when vertices are recreated
+    // 重新创建顶点后，重置邻接矩阵
     for (int i = 0; i < kMaxNodes; ++i)
     {
         for (int j = 0; j < kMaxNodes; ++j)
         {
-            adj_matrix_[i][j] = kInfinity;
+            adj_matrix_[i][j] = (i == j ? 0 : kInfinity);
         }
     }
     is_mst_created_ = false;
-    ClearInputBuffer(); // Clear newline after reading names
+    ClearInputBuffer();
 }
 
 void PowerGridSystem::AddEdges()
@@ -183,13 +184,14 @@ void PowerGridSystem::AddEdges()
         std::cin >> u_name >> v_name >> weight;
         if (std::cin.fail())
         {
-            std::cout << "无效的长度，请重新输入。\n";
+            std::cout << "无效的输入，请重新输入。\n";
             std::cin.clear(); // Clear error flags
             ClearInputBuffer();
             continue;
         }
-        // Check for exit condition ? ? 0
-        if (strcmp(u_name, "?") == 0 || strcmp(v_name, "?") == 0 || (weight == 0))
+
+        // 结束输入：? ? 0
+        if (strcmp(u_name, "?") == 0 && strcmp(v_name, "?") == 0 && weight == 0)
         {
             break;
         }
@@ -199,6 +201,18 @@ void PowerGridSystem::AddEdges()
         if (u_idx == -1 || v_idx == -1)
         {
             std::cout << "顶点不存在，请重新输入。\n";
+            continue;
+        }
+
+        if (u_idx == v_idx)
+        {
+            std::cout << "不允许自环边，请重新输入。\n";
+            continue;
+        }
+
+        if (weight <= 0)
+        {
+            std::cout << "边权必须为正整数，请重新输入。\n";
             continue;
         }
 
@@ -304,25 +318,18 @@ void PowerGridSystem::DisplayMST() const
         return;
     }
 
-    std::cout << "最小生成树的顶点及边:\n";
+    std::cout << "最小生成树的边如下:\n";
+    int total_cost = 0;
     for (int i = 0; i < mst_edge_count_; ++i)
     {
         int u = mst_edges_[i].u_index;
         int v = mst_edges_[i].v_index;
         int w = mst_edges_[i].weight;
+        total_cost += w;
 
-        // Format: a-<b>->c (vertex-weight->vertex)
-        // Note: The screenshot shows specific formatting.
-        // Example: a-(8)->b
-        std::cout << vertex_names_[u] << "<-<" << w << ">->" << vertex_names_[v]
-                  << "   ";
-
-        // Add a newline every few edges for readability if needed,
-        // or strictly follow screenshot which lists them out.
-        if ((i + 1) % 3 == 0)
-            std::cout << "\n";
+        std::cout << vertex_names_[u] << "-(" << w << ")-" << vertex_names_[v] << "\n";
     }
-    std::cout << "\n";
+    std::cout << "总造价: " << total_cost << "\n";
 }
 
 int PowerGridSystem::GetVertexIndex(const char *name) const
@@ -339,14 +346,14 @@ int PowerGridSystem::GetVertexIndex(const char *name) const
 
 void PowerGridSystem::ClearInputBuffer() const
 {
-    // Clears the input stream until a newline is found
-    // Using cin.get in a loop is safer than ignore() without <limits>
-    // However, simpler logic for char input:
-    // We just need to consume the newline left by cin >>
-    if (std::cin.peek() == '\n')
-    {
-        std::cin.get();
-    }
+    std::cin.clear();
+    std::cin.ignore(10000, '\n');
+}
+
+void PowerGridSystem::PressKeyToContinue() const
+{
+    std::cout << "按回车键继续...";
+    std::cin.get();
 }
 
 int main()

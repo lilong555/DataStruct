@@ -1,166 +1,111 @@
 #include <iostream>
-template <typename T>
-class vector
+
+/**
+ * 题目七：修理牧场（最小花费锯木头）
+ *
+ * 思路：每次取出当前最短的两段合并，合并代价为两段之和，并把新段放回。
+ * 该问题等价于“最优合并/哈夫曼合并”，使用小根堆可在 O(N log N) 内求最小总花费。
+ */
+namespace
 {
-private:
-    T *_data;
-    size_t _size;
-    size_t _cacp;
+void SiftUp(long long *heap, int index)
+{
+    while (index > 1)
+    {
+        int parent = index / 2;
+        if (heap[parent] <= heap[index])
+        {
+            break;
+        }
+        long long tmp = heap[parent];
+        heap[parent] = heap[index];
+        heap[index] = tmp;
+        index = parent;
+    }
+}
 
-public:
-    explicit vector(size_t n = 0)
+void SiftDown(long long *heap, int heap_size, int index)
+{
+    while (true)
     {
-        _size = n;
-        _cacp = (n > 0 ? n : 1);
-        _data = new T[_cacp];
-        for (size_t i = 0; i < n; ++i)
-        {
-            _data[i] = T();
-        }
-    }
-    ~vector()
-    {
-        if (_data)
-        {
-            delete[] _data;
-            _data = nullptr;
-        }
-    }
-    vector(const vector &other)
-    {
-        _size = other._size;
-        _cacp = other._cacp;
-        _data = new T[_cacp];
-        for (size_t i = 0; i < _cacp; i++)
-        {
-            _data[i] = other._data[i];
-        }
-    }
-    vector &operator=(const vector &other)
-    {
-        if (this == &other)
-        {
-            return *this;
-        }
-        _size = other._size;
-        _cacp = other._cacp;
-        delete[] _data;
-        _data = new T[_cacp];
-        for (size_t i = 0; i < _cacp; i++)
-        {
-            _data[i] = other._data[i];
-        }
-        return *this;
-    }
-    T &operator[](size_t index)
-    {
-        if (index >= _size)
-        {
-            throw std::out_of_range("Index out of range");
-        }
-        else
-        {
-            return _data[index];
-        }
-    }
-    const T &operator[](size_t index) const
-    {
-        if (index >= _size)
-        {
-            throw std::out_of_range("Index out of range");
-        }
-        else
-        {
-            return _data[index];
-        }
-    }
-    void push_back(const T &val)
-    {
-        // 如果满了，需要扩容
-        if (_size == _cacp)
-        {
-            resize_capacity(_cacp * 2); // 容量翻倍
-        }
-        _data[_size++] = val;
-    }
-    size_t size() const
-    {
-        return _size;
-    }
-    void sort(size_t l = 0, size_t r = 0) // 默认小到大排序，递归分治排序
-    {
-        if (l >= r)
-            return;
-        size_t mid = (l + r) / 2;
-        sort(l, mid);
-        sort(mid + 1, r);
-        vector<T> temp;
-        size_t L = l, R = mid + 1;
-        while (L <= mid && R <= r)
-        {
-            if (_data[L] < _data[R])
-            {
-                temp.push_back(_data[L]);
-                L++;
-            }
-            else
-            {
-                temp.push_back(_data[R]);
-                R++;
-            }
-        }
-        while (R <= r)
-        {
-            temp.push_back(_data[R++]);
-        }
-        while (L <= mid)
-        {
-            temp.push_back(_data[L++]);
-        }
-        size_t tot = 0;
-        for (size_t i = l; i <= r; i++)
-        {
-            _data[i] = temp[tot++];
-        }
-    }
+        int left = index * 2;
+        int right = left + 1;
+        int smallest = index;
 
-private:
-    void resize_capacity(size_t newcacp)
-    {
-        T *newdata = new T[newcacp];
-        for (size_t i = 0; i < _size; i++)
+        if (left <= heap_size && heap[left] < heap[smallest])
         {
-            newdata[i] = _data[i];
+            smallest = left;
         }
-        delete[] _data;
-        _data = newdata;
-        _cacp = newcacp;
+        if (right <= heap_size && heap[right] < heap[smallest])
+        {
+            smallest = right;
+        }
+
+        if (smallest == index)
+        {
+            break;
+        }
+
+        long long tmp = heap[index];
+        heap[index] = heap[smallest];
+        heap[smallest] = tmp;
+        index = smallest;
     }
-};
+}
+
+void HeapPush(long long *heap, int &heap_size, long long value)
+{
+    heap[++heap_size] = value;
+    SiftUp(heap, heap_size);
+}
+
+long long HeapPop(long long *heap, int &heap_size)
+{
+    long long top = heap[1];
+    heap[1] = heap[heap_size--];
+    if (heap_size > 0)
+    {
+        SiftDown(heap, heap_size, 1);
+    }
+    return top;
+}
+} // namespace
+
 int main()
 {
-    int n;
-    std::cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++)
-    {
-        std::cin >> a[i];
-    }
-    if (a.size() > 1)
-    {
-        a.sort(0, a.size() - 1);
-    }
-    int64_t sum = 0, ans = 0;
-    for (int i = 0; i < n; i++)
-    {
-        sum += a[i];
-    }
-    for (int i = 0; i < n - 1; i++)
-    {
-        ans += sum;
-        sum -= a[i];
-    }
-    std::cout << ans << std::endl;
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
 
+    int n = 0;
+    if (!(std::cin >> n))
+    {
+        return 0;
+    }
+
+    // 1-indexed 小根堆，最大元素个数不超过 n
+    long long *heap = new long long[(n > 0 ? n : 1) + 5];
+    int heap_size = 0;
+
+    for (int i = 0; i < n; ++i)
+    {
+        long long length = 0;
+        std::cin >> length;
+        HeapPush(heap, heap_size, length);
+    }
+
+    // N<=1 时无需合并/锯木，花费为 0
+    long long total_cost = 0;
+    while (heap_size > 1)
+    {
+        long long a = HeapPop(heap, heap_size);
+        long long b = HeapPop(heap, heap_size);
+
+        long long merged = a + b;
+        total_cost += merged;
+        HeapPush(heap, heap_size, merged);
+    }
+
+    std::cout << total_cost << "\n";
+    delete[] heap;
     return 0;
 }

@@ -622,14 +622,28 @@ int main()
         if (perform_full_test == 'y' || perform_full_test == 'Y')
         {
             // 对不同数据规模进行测试
-            vector<int> test_sizes = {100, 1000, 10000};
-            if (data_size <= 100000)
+            vector<int> test_sizes = {100, 1000, 10000, 100000};
+
+            bool exists = false;
+            for (int size : test_sizes)
+            {
+                if (size == data_size)
+                {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists)
             {
                 test_sizes.push_back(data_size);
             }
 
             for (int size : test_sizes)
             {
+                if (size >= 50000)
+                {
+                    cout << "\n提示：数据规模较大，冒泡/选择/插入等 O(n^2) 算法可能耗时较长。" << endl;
+                }
                 RunPerformanceTest(size);
             }
         }
